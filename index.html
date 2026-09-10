@@ -3992,6 +3992,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:"Zen Kaku Gothic New",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:var(--ink);text-decoration:none}
 a:hover{color:oklch(0.55 0.13 70)}
@@ -4099,7 +4100,7 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 </helmet>
 
 <div style="position:fixed;top:0;left:0;height:3px;width:100%;z-index:90;background:transparent;pointer-events:none">
-  <div data-progress="" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div>
+  <div data-progress="" style="height:100%;width:100%;transform:scaleX(0);transform-origin:left;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div>
 </div>
 
 <nav data-nav="" style="position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:6px;padding:8px 10px 8px 18px;border-radius:999px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.7);box-shadow:0 12px 40px -18px rgba(23,33,46,.35),inset 0 1px 0 rgba(255,255,255,.9);max-width:calc(100vw - 24px)">
@@ -4133,7 +4134,7 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 
   <div style="position:relative;width:100%;max-width:1680px;margin:0 auto 0 0;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px">
     <div data-hero-el="" style="max-width:min(820px,100%);display:flex;flex-direction:column;align-items:flex-start;gap:6px">
-      <span data-linemask="" style="position:relative;display:block;overflow:hidden;padding:0"><span data-line="" style="display:inline-block;background:#0d1117;color:#fff;font-size:clamp(34px,5.4vw,68px);font-weight:900;line-height:1.32;letter-spacing:-.015em;padding:.10em .26em;box-shadow:0 22px 50px -26px rgba(13,17,23,.65)">直径2cm以上の加工は、</span><span data-wipebar="" style="position:absolute;top:0;bottom:0;left:0;width:100%;transform:translateX(-102%);background:linear-gradient(90deg,oklch(0.70 0.13 70),oklch(0.80 0.12 84));pointer-events:none"></span></span>
+      <span data-linemask="" style="position:relative;display:block;overflow:hidden;padding:0"><span data-line="" style="display:inline-block;background:#0d1117;color:#fff;font-size:clamp(34px,5.4vw,68px);font-weight:900;line-height:1.32;letter-spacing:-.015em;padding:.10em .26em;box-shadow:0 22px 50px -26px rgba(13,17,23,.65)">直径2cm以下の加工は、</span><span data-wipebar="" style="position:absolute;top:0;bottom:0;left:0;width:100%;transform:translateX(-102%);background:linear-gradient(90deg,oklch(0.70 0.13 70),oklch(0.80 0.12 84));pointer-events:none"></span></span>
       <span data-linemask="" style="position:relative;display:block;overflow:hidden;padding:0"><span data-line="" style="display:inline-block;background:#0d1117;color:#fff;font-size:clamp(34px,5.4vw,68px);font-weight:900;line-height:1.32;letter-spacing:-.015em;padding:.10em .26em;box-shadow:0 22px 50px -26px rgba(13,17,23,.65)">誰にも負けない。</span><span data-wipebar="" style="position:absolute;top:0;bottom:0;left:0;width:100%;transform:translateX(-102%);background:linear-gradient(90deg,oklch(0.70 0.13 70),oklch(0.80 0.12 84));pointer-events:none"></span></span>
     </div>
     <div data-hero-el="" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;background:var(--glass-b);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.85)">
@@ -4671,12 +4672,11 @@ class Component extends DCLogic {
   componentWillUnmount() {
     clearInterval(this._slideTimer);
     if (this._icStop) this._icStop();
-    if (this._onWheel) window.removeEventListener('wheel', this._onWheel);
-    if (this._syncTarget) window.removeEventListener('scroll', this._syncTarget);
+    if (this._scrollFrame) cancelAnimationFrame(this._scrollFrame);
     if (this._io) this._io.disconnect();
     if (this._onScroll) {
       window.removeEventListener('scroll', this._onScroll);
-      document.removeEventListener('scroll', this._onScroll, true);
+      window.removeEventListener('resize', this._onScroll);
     }
     document.documentElement.classList.remove('js-anim');
   }
@@ -4809,7 +4809,6 @@ class Component extends DCLogic {
   }
   _boot() {
     const motion = this.props.motion ?? 'full';
-    this._smoothScroll(motion);
     this._radialButtons();
     this._interviewCarousel(motion);
     const q = s => Array.from(document.querySelectorAll(s));
@@ -4946,49 +4945,28 @@ class Component extends DCLogic {
       paths.forEach(p => { p.addEventListener('mousemove', move); p.addEventListener('mouseleave', reset); });
     });
 
-    const scroller = () => document.body.scrollTop || document.documentElement.scrollTop || window.scrollY || 0;
-    this._onScroll = () => {
-      const y = scroller();
-      const sh = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-      const ch = document.body.clientHeight || window.innerHeight;
-      const max = Math.max(1, sh - ch);
-      if (prog) prog.style.width = Math.min(100, (y / max) * 100) + '%';
+    // Let the browser own scrolling; only coalesce visual updates into one frame.
+    const updateScroll = () => {
+      this._scrollFrame = null;
+      const root = document.scrollingElement || document.documentElement;
+      const y = root.scrollTop;
+      const max = Math.max(1, root.scrollHeight - window.innerHeight);
+      // Read geometry before writing styles to avoid forced layout per wave.
+      const offsets = motion === 'full' ? waves.map(w => {
+        const top = w.parentElement.getBoundingClientRect().top;
+        const p = Math.max(0, Math.min(1, 1 - top / (window.innerHeight || 1)));
+        return 'translateY(' + (-5 + p * 5).toFixed(2) + '%)';
+      }) : [];
+      if (prog) prog.style.transform = 'scaleX(' + Math.max(0, Math.min(1, y / max)) + ')';
       if (nav) nav.classList.toggle('small', y > 60);
-      if (motion === 'full') waves.forEach(w => {
-        const r = w.parentElement.getBoundingClientRect();
-        const p = Math.max(0, Math.min(1, 1 - r.top / (window.innerHeight || 1)));
-        w.style.transform = 'translateY(' + (-5 + p * 5).toFixed(2) + '%)';
-      });
+      offsets.forEach((offset, i) => { waves[i].style.transform = offset; });
     };
-    document.addEventListener('scroll', this._onScroll, { passive: true, capture: true });
+    this._onScroll = () => {
+      if (!this._scrollFrame) this._scrollFrame = requestAnimationFrame(updateScroll);
+    };
     window.addEventListener('scroll', this._onScroll, { passive: true });
-    this._onScroll();
-  }
-  _smoothScroll(motion) {
-    if (motion === 'off' || this.props.smoothScroll === false) return;
-    if (!window.matchMedia || !window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
-    const ease = Math.max(0.03, Math.min(0.2, this.props.scrollEase ?? 0.085));
-    const maxY = () => Math.max(0, (document.documentElement.scrollHeight || 0) - window.innerHeight);
-    let target = window.scrollY || 0, current = target, running = false;
-    const put = y => window.scrollTo({ top: y, behavior: 'instant' });
-    const loop = () => {
-      current += (target - current) * ease;
-      if (Math.abs(target - current) < 0.5) { current = target; running = false; put(current); return; }
-      put(current);
-      requestAnimationFrame(loop);
-    };
-    this._onWheel = e => {
-      if (e.ctrlKey || e.metaKey || e.defaultPrevented) return;
-      const t = e.target;
-      if (t && t.closest && t.closest('[data-hviewport],textarea,select')) return;
-      e.preventDefault();
-      if (!running) current = window.scrollY || 0;
-      target = Math.max(0, Math.min(maxY(), (running ? target : current) + e.deltaY * 1.15));
-      if (!running) { running = true; requestAnimationFrame(loop); }
-    };
-    window.addEventListener('wheel', this._onWheel, { passive: false });
-    this._syncTarget = () => { if (!running) target = window.scrollY || 0; };
-    window.addEventListener('scroll', this._syncTarget, { passive: true });
+    window.addEventListener('resize', this._onScroll, { passive: true });
+    updateScroll();
   }
   renderVals() {
     return {
