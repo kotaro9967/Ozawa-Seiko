@@ -4076,6 +4076,13 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 [data-icslide][data-pos=active] [data-icperson]>*:nth-child(4){transition-delay:.48s}
 [data-icslide][data-pos=prev] [data-icframe],[data-icslide][data-pos=next] [data-icframe]{pointer-events:auto;cursor:pointer}
 [data-icbtn]{pointer-events:none}
+/* Replay the interview button's ink sweep whenever a profile becomes active. */
+@keyframes ic-button-ink{0%,100%{transform:scaleX(0)}35%,65%{transform:scaleX(1)}}
+@keyframes ic-button-label{0%,100%{color:var(--ink)}35%,65%{color:var(--paper)}}
+[data-ic]:not([data-motion=off]) [data-icslide][data-pos=active] [data-icbtn]::before{animation:ic-button-ink 1.2s cubic-bezier(.65,0,.35,1) .48s;transform-origin:left center}
+[data-ic]:not([data-motion=off]) [data-icslide][data-pos=active] [data-icbtn] span{animation:ic-button-label 1.2s ease .48s}
+@media(prefers-reduced-motion:reduce){[data-ic] [data-icbtn]::before,[data-ic] [data-icbtn] span{animation:none!important}}
+
 [data-icbtn]::before{content:"";position:absolute;inset:0;z-index:0;background:var(--ink);transform:scaleX(0);transform-origin:right center;transition:transform .5s cubic-bezier(.65,0,.35,1)}
 [data-icbtn]:hover::before{transform:scaleX(1);transform-origin:left center}
 [data-icbtn]:hover{color:var(--paper)!important}
@@ -4661,7 +4668,7 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script="" data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;oklch(0.70 0.13 70)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;oklch(0.70 0.13 70)&quot;,&quot;oklch(0.68 0.13 30)&quot;,&quot;oklch(0.66 0.13 250)&quot;,&quot;oklch(0.66 0.13 150)&quot;],&quot;section&quot;:&quot;見た目&quot;},&quot;intro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;full&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;subtle&quot;,&quot;off&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;smoothScroll&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;scrollEase&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.085,&quot;min&quot;:0.03,&quot;max&quot;:0.2,&quot;step&quot;:0.005,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;演出&quot;}}">
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;oklch(0.70 0.13 70)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;oklch(0.70 0.13 70)&quot;,&quot;oklch(0.68 0.13 30)&quot;,&quot;oklch(0.66 0.13 250)&quot;,&quot;oklch(0.66 0.13 150)&quot;],&quot;section&quot;:&quot;見た目&quot;},&quot;intro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;full&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;subtle&quot;,&quot;off&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;smoothScroll&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;scrollEase&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.055,&quot;min&quot;:0.03,&quot;max&quot;:0.2,&quot;step&quot;:0.005,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;演出&quot;}}">
 class Component extends DCLogic {
   state = { sent: false };
   componentDidMount() {
@@ -4672,6 +4679,7 @@ class Component extends DCLogic {
   componentWillUnmount() {
     clearInterval(this._slideTimer);
     if (this._icStop) this._icStop();
+    if (this._smoothCleanup) this._smoothCleanup();
     if (this._scrollFrame) cancelAnimationFrame(this._scrollFrame);
     if (this._io) this._io.disconnect();
     if (this._onScroll) {
@@ -4737,6 +4745,7 @@ class Component extends DCLogic {
     const slides = Array.from(root.querySelectorAll('[data-icslide]'));
     if (!stage || !slides.length) return;
     root.dataset.icReady = '1';
+    root.dataset.motion = motion;
     const total = slides.length;
     const counter = root.querySelector('[data-iccount]');
     const fill = root.querySelector('[data-icfill]');
@@ -4809,6 +4818,7 @@ class Component extends DCLogic {
   }
   _boot() {
     const motion = this.props.motion ?? 'full';
+    this._smoothScroll(motion);
     this._radialButtons();
     this._interviewCarousel(motion);
     const q = s => Array.from(document.querySelectorAll(s));
@@ -4945,7 +4955,7 @@ class Component extends DCLogic {
       paths.forEach(p => { p.addEventListener('mousemove', move); p.addEventListener('mouseleave', reset); });
     });
 
-    // Let the browser own scrolling; only coalesce visual updates into one frame.
+    // Coalesce scroll-linked visual updates into one frame.
     const updateScroll = () => {
       this._scrollFrame = null;
       const root = document.scrollingElement || document.documentElement;
@@ -4967,6 +4977,84 @@ class Component extends DCLogic {
     window.addEventListener('scroll', this._onScroll, { passive: true });
     window.addEventListener('resize', this._onScroll, { passive: true });
     updateScroll();
+  }
+  _smoothScroll(motion) {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+    if (motion === 'off' || this.props.smoothScroll === false) return;
+    const root = document.scrollingElement || document.documentElement;
+    // Time-based easing gives the same feel on 60 Hz and high-refresh displays.
+    const ease = Math.max(0.03, Math.min(0.2, this.props.scrollEase ?? 0.055));
+    let frame = null, target = root.scrollTop, previousTime = null, written = null, position = target;
+    const limit = () => Math.max(0, root.scrollHeight - window.innerHeight);
+    const stop = () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = null;
+      previousTime = null;
+      written = null;
+      target = root.scrollTop;
+      position = target;
+    };
+    const tick = time => {
+      frame = null;
+      const current = root.scrollTop;
+      // Yield to scrolling initiated elsewhere instead of pulling it back.
+      if (written !== null && Math.abs(current - written) > 1) { stop(); return; }
+      target = Math.max(0, Math.min(limit(), target));
+      const dt = previousTime === null ? 1000 / 60 : Math.min(64, time - previousTime);
+      previousTime = time;
+      const alpha = 1 - Math.pow(1 - ease, dt / (1000 / 60));
+      const done = Math.abs(target - position) < 0.5;
+      position = done ? target : position + (target - position) * alpha;
+      window.scrollTo({ top: position, behavior: 'instant' });
+      written = root.scrollTop;
+      if (done) { stop(); return; }
+      frame = requestAnimationFrame(tick);
+    };
+    const wheel = e => {
+      if (e.defaultPrevented || !e.cancelable || e.ctrlKey || e.metaKey ||
+          reduced.matches || !fine.matches || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) {
+        stop(); return;
+      }
+      // Leave controls and nested scroll areas in charge of their own input.
+      for (let el = e.target instanceof Element ? e.target : null; el && el !== root && el !== document.body; el = el.parentElement) {
+        if (el.matches('textarea,select,input,[contenteditable]:not([contenteditable="false"]),[data-hviewport]') ||
+            (/(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight)) {
+          stop(); return;
+        }
+      }
+      e.preventDefault();
+      const current = root.scrollTop;
+      const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1) * 0.7;
+      if (frame === null || delta * (target - current) < 0) { target = current; position = current; }
+      target = Math.max(0, Math.min(limit(), target + delta));
+      if (frame === null) frame = requestAnimationFrame(tick);
+    };
+    const key = e => {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) stop();
+    };
+    const listen = (type, fn, options) => {
+      window.addEventListener(type, fn, options);
+      return () => window.removeEventListener(type, fn, options);
+    };
+    const cleanups = [
+      listen('wheel', wheel, { passive: false }),
+      listen('keydown', key, true),
+      listen('pointerdown', stop, true),
+      listen('touchstart', stop, { passive: true }),
+      listen('click', stop, true),
+      listen('hashchange', stop),
+      listen('resize', stop),
+      listen('blur', stop)
+    ];
+    reduced.addEventListener('change', stop);
+    fine.addEventListener('change', stop);
+    this._smoothCleanup = () => {
+      stop();
+      cleanups.forEach(cleanup => cleanup());
+      reduced.removeEventListener('change', stop);
+      fine.removeEventListener('change', stop);
+    };
   }
   renderVals() {
     return {
