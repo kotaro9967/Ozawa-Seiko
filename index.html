@@ -4099,6 +4099,19 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 #school [data-grid=cards3]>[data-reveal]::after{right:22px;rotate:16deg}
 #school [data-grid=cards3]>[data-reveal]>div:first-child{position:relative;border-radius:28px 34px 0 0}
 
+/* Keep the first card's round bear ears; give the others distinct silhouettes. */
+#school [data-grid=cards3]>[data-reveal]:nth-child(2)::before,
+#school [data-grid=cards3]>[data-reveal]:nth-child(2)::after{
+  top:-14px;width:30px;height:30px;border-radius:5px;rotate:45deg;
+}
+#school [data-grid=cards3]>[data-reveal]:nth-child(3)::before,
+#school [data-grid=cards3]>[data-reveal]:nth-child(3)::after{
+  top:-32px;width:20px;height:48px;border-radius:55% 55% 38% 38%;
+}
+#school [data-grid=cards3]>[data-reveal]:nth-child(3)::before{left:30px;rotate:-10deg}
+#school [data-grid=cards3]>[data-reveal]:nth-child(3)::after{right:30px;rotate:10deg}
+@media(max-width:760px){#school [data-grid=cards3]{gap:48px!important}}
+
 [data-icbtn]{pointer-events:none}
 /* Replay the interview button's ink sweep whenever a profile becomes active. */
 @keyframes ic-button-ink{0%,100%{transform:scaleX(0)}35%,65%{transform:scaleX(1)}}
