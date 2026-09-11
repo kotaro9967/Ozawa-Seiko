@@ -4075,6 +4075,18 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 [data-icslide][data-pos=active] [data-icperson]>*:nth-child(3){transition-delay:.36s}
 [data-icslide][data-pos=active] [data-icperson]>*:nth-child(4){transition-delay:.48s}
 [data-icslide][data-pos=prev] [data-icframe],[data-icslide][data-pos=next] [data-icframe]{pointer-events:auto;cursor:pointer}
+
+/* Slightly tilted, softly rounded cards, like photos laid out by hand. */
+#school [data-grid=cards3]{gap:28px!important;padding:12px 8px 24px;align-items:start}
+#school [data-grid=cards3]>[data-reveal]{border-radius:30px 36px 28px 34px!important;border:2px solid rgba(255,255,255,.95)!important;rotate:var(--school-tilt);translate:0 var(--school-offset);backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#school [data-grid=cards3]>:nth-child(1){--school-tilt:-2.4deg;--school-offset:8px}
+#school [data-grid=cards3]>:nth-child(2){--school-tilt:1.8deg;--school-offset:24px}
+#school [data-grid=cards3]>:nth-child(3){--school-tilt:-1.4deg;--school-offset:0px}
+@media(max-width:760px){
+  #school [data-grid=cards3]{gap:28px!important;padding:8px 10px 12px}
+  #school [data-grid=cards3]>[data-reveal]{--school-offset:0px;rotate:calc(var(--school-tilt) * .55)}
+}
+
 [data-icbtn]{pointer-events:none}
 /* Replay the interview button's ink sweep whenever a profile becomes active. */
 @keyframes ic-button-ink{0%,100%{transform:scaleX(0)}35%,65%{transform:scaleX(1)}}
@@ -4668,7 +4680,7 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script="" data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;oklch(0.70 0.13 70)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;oklch(0.70 0.13 70)&quot;,&quot;oklch(0.68 0.13 30)&quot;,&quot;oklch(0.66 0.13 250)&quot;,&quot;oklch(0.66 0.13 150)&quot;],&quot;section&quot;:&quot;見た目&quot;},&quot;intro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;full&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;subtle&quot;,&quot;off&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;smoothScroll&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;scrollEase&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.055,&quot;min&quot;:0.03,&quot;max&quot;:0.2,&quot;step&quot;:0.005,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;演出&quot;}}">
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;oklch(0.70 0.13 70)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;oklch(0.70 0.13 70)&quot;,&quot;oklch(0.68 0.13 30)&quot;,&quot;oklch(0.66 0.13 250)&quot;,&quot;oklch(0.66 0.13 150)&quot;],&quot;section&quot;:&quot;見た目&quot;},&quot;intro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;full&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;subtle&quot;,&quot;off&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;smoothScroll&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;scrollEase&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.14,&quot;min&quot;:0.03,&quot;max&quot;:0.2,&quot;step&quot;:0.005,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;演出&quot;}}">
 class Component extends DCLogic {
   state = { sent: false };
   componentDidMount() {
@@ -4816,21 +4828,7 @@ class Component extends DCLogic {
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else play(); });
     render(); play();
   }
-  _shuffleFactorySchool() {
-    const grid = document.querySelector('#school [data-grid="cards3"]');
-    if (!grid || grid.dataset.shuffled) return;
-    const cards = Array.from(grid.children);
-    // Shuffle once per page load; keep each photo and its description together.
-    for (let i = cards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [cards[i], cards[j]] = [cards[j], cards[i]];
-    }
-    // CSS order preserves React's ownership of the card nodes.
-    cards.forEach((card, index) => { card.style.order = String(index); });
-    grid.dataset.shuffled = '1';
-  }
   _boot() {
-    this._shuffleFactorySchool();
     const motion = this.props.motion ?? 'full';
     this._smoothScroll(motion);
     this._radialButtons();
@@ -4998,7 +4996,7 @@ class Component extends DCLogic {
     if (motion === 'off' || this.props.smoothScroll === false) return;
     const root = document.scrollingElement || document.documentElement;
     // Time-based easing gives the same feel on 60 Hz and high-refresh displays.
-    const ease = Math.max(0.03, Math.min(0.2, this.props.scrollEase ?? 0.055));
+    const ease = Math.max(0.12, Math.min(0.3, this.props.scrollEase ?? 0.14));
     let frame = null, target = root.scrollTop, previousTime = null, written = null, position = target;
     const limit = () => Math.max(0, root.scrollHeight - window.innerHeight);
     const stop = () => {
@@ -5017,7 +5015,10 @@ class Component extends DCLogic {
       target = Math.max(0, Math.min(limit(), target));
       const dt = previousTime === null ? 1000 / 60 : Math.min(64, time - previousTime);
       previousTime = time;
-      const alpha = 1 - Math.pow(1 - ease, dt / (1000 / 60));
+      // Catch up faster during large/rapid wheel input instead of building a long tail.
+      const distance = Math.abs(target - position);
+      const response = Math.min(0.6, ease + distance / 2200);
+      const alpha = 1 - Math.pow(1 - response, dt / (1000 / 60));
       const done = Math.abs(target - position) < 0.5;
       position = done ? target : position + (target - position) * alpha;
       window.scrollTo({ top: position, behavior: 'instant' });
@@ -5039,7 +5040,7 @@ class Component extends DCLogic {
       }
       e.preventDefault();
       const current = root.scrollTop;
-      const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1) * 0.7;
+      const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
       if (frame === null || delta * (target - current) < 0) { target = current; position = current; }
       target = Math.max(0, Math.min(limit(), target + delta));
       if (frame === null) frame = requestAnimationFrame(tick);
