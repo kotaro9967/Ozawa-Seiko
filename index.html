@@ -4087,6 +4087,18 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
   #school [data-grid=cards3]>[data-reveal]{--school-offset:0px;rotate:calc(var(--school-tilt) * .55)}
 }
 
+/* Two small round ears give the cards a simple bear-like silhouette. */
+#school [data-grid=cards3]>[data-reveal]{position:relative;isolation:isolate;overflow:visible!important}
+#school [data-grid=cards3]>[data-reveal]::before,
+#school [data-grid=cards3]>[data-reveal]::after{
+  content:"";position:absolute;top:-16px;width:32px;height:30px;
+  border:2px solid rgba(255,255,255,.95);border-radius:50% 50% 42% 42%;
+  background:#f8f8f3;z-index:-1;pointer-events:none;
+}
+#school [data-grid=cards3]>[data-reveal]::before{left:22px;rotate:-16deg}
+#school [data-grid=cards3]>[data-reveal]::after{right:22px;rotate:16deg}
+#school [data-grid=cards3]>[data-reveal]>div:first-child{position:relative;border-radius:28px 34px 0 0}
+
 [data-icbtn]{pointer-events:none}
 /* Replay the interview button's ink sweep whenever a profile becomes active. */
 @keyframes ic-button-ink{0%,100%{transform:scaleX(0)}35%,65%{transform:scaleX(1)}}
