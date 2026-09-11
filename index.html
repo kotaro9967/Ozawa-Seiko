@@ -4112,6 +4112,23 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
 #school [data-grid=cards3]>[data-reveal]:nth-child(3)::after{right:30px;rotate:10deg}
 @media(max-width:760px){#school [data-grid=cards3]{gap:48px!important}}
 
+/* Decorative feet and tails stay outside the reading area. */
+#school [data-school-paws]{position:absolute;inset:0;z-index:-1;pointer-events:none}
+#school [data-school-paws]::before,#school [data-school-paws]::after{
+  content:"";position:absolute;bottom:-11px;width:30px;height:21px;
+  border-radius:45% 45% 50% 50%;background:#f8f8f3;border:2px solid rgba(255,255,255,.95);
+}
+#school [data-school-paws]::before{left:38px;rotate:-8deg}
+#school [data-school-paws]::after{right:38px;rotate:8deg}
+#school [data-school-tail]{position:absolute;right:-13px;bottom:31px;width:24px;height:24px;border:2px solid rgba(255,255,255,.95);border-radius:50%;background:#f8f8f3}
+#school [data-grid=cards3]>:nth-child(2) [data-school-tail]{right:-14px;bottom:30px;width:22px;height:45px;background:transparent;border:8px solid #f8f8f3;border-top-color:transparent;border-radius:8px 8px 24px 24px;rotate:-20deg}
+#school [data-grid=cards3]>:nth-child(2) [data-school-paws]::before,
+#school [data-grid=cards3]>:nth-child(2) [data-school-paws]::after{width:25px;height:20px}
+#school [data-grid=cards3]>:nth-child(3) [data-school-tail]{right:-14px;width:28px;height:28px;border-radius:44% 52% 46% 55%}
+#school [data-grid=cards3]>:nth-child(3) [data-school-paws]::before,
+#school [data-grid=cards3]>:nth-child(3) [data-school-paws]::after{width:35px;height:20px}
+@media(max-width:760px){#school [data-grid=cards3]{gap:64px!important}}
+
 [data-icbtn]{pointer-events:none}
 /* Replay the interview button's ink sweep whenever a profile becomes active. */
 @keyframes ic-button-ink{0%,100%{transform:scaleX(0)}35%,65%{transform:scaleX(1)}}
@@ -4365,6 +4382,7 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
     <div data-reveal-group="" data-grid="cards3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px">
       <div data-reveal="" style="border-radius:26px;overflow:hidden;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.9);box-shadow:0 26px 60px -34px rgba(23,33,46,.35)">
         <div style="height:180px;overflow:hidden;background:#f1ede4"><img src="./assets/9d786234-1ce4-4559-b8ec-dd765510b990.jpg" alt="真鍮丸棒を削ってお香立てをつくる" style="width:100%;height:100%;object-fit:cover;object-position:50% 45%;display:block"></div>
+        <span data-school-paws="" aria-hidden="true"><span data-school-tail=""></span></span>
         <div style="padding:24px">
           <div style="font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.16em;color:var(--accent3)">WORKSHOP</div>
           <h3 style="margin:10px 0 0;font-size:18px;font-weight:700">真鍮丸棒を、<br>お香立てに。</h3>
@@ -4373,6 +4391,7 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
       </div>
       <div data-reveal="" style="border-radius:26px;overflow:hidden;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.9);box-shadow:0 26px 60px -34px rgba(23,33,46,.35)">
         <div style="height:180px;overflow:hidden;background:#f1ede4"><img src="./assets/bc28d9d3-3170-41c9-aa88-1487297fd045.jpg" alt="かつしかライブファクトリーの参加者" style="width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block"></div>
+        <span data-school-paws="" aria-hidden="true"><span data-school-tail=""></span></span>
         <div style="padding:24px">
           <div style="font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.16em;color:var(--accent2)">EVENT</div>
           <h3 style="margin:10px 0 0;font-size:18px;font-weight:700">かつしか<br>ライブファクトリー</h3>
@@ -4381,6 +4400,7 @@ html.js-anim [data-intro-label].out{opacity:0;transform:translate(-50%,calc(-50%
       </div>
       <div data-reveal="" style="border-radius:26px;overflow:hidden;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.9);box-shadow:0 26px 60px -34px rgba(23,33,46,.35)">
         <div style="height:180px;overflow:hidden;background:#f1ede4"><img src="./assets/cefae25a-0452-4165-b9eb-7b7d8b6a3c35.jpg" alt="変形菌の観察とスケッチ" style="width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block"></div>
+        <span data-school-paws="" aria-hidden="true"><span data-school-tail=""></span></span>
         <div style="padding:24px">
           <div style="font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.16em;color:var(--accent)">RESEARCH</div>
           <h3 style="margin:10px 0 0;font-size:18px;font-weight:700">日本変形菌研究、<br>そして自然から学ぶ</h3>
